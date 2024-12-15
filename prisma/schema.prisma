@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
 }
 
 generator client {
@@ -12,4 +12,22 @@ model Task {
   name      String   @unique
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String   
+  price     Float
+  featured  Boolean  @default(false)
+  rating    Float    @default(0)
+  company   Company
+  createdAt DateTime @default(now())
+  version   Int      @default(0) @map("__v")
+}
+
+enum Company {
+  ikea
+  liddy
+  caressa
+  marcos
 }

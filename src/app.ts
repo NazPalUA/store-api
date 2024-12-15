@@ -3,13 +3,14 @@ import 'dotenv/config';
 import express, { Application } from 'express';
 import { errorMiddleware } from './middleware/error-handler';
 import { notFoundMiddleware } from './middleware/not-found';
+import productRoutes from './routes/products.routes';
 import taskRoutes from './routes/tasks.routes';
-
 const app: Application = express();
 const prisma = new PrismaClient();
 
 app.use(express.json());
 app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/products', productRoutes);
 
 app.use(express.static('./public'));
 

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "populate": "ts-node ./src/scripts/populate.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,6 @@
     "@prisma/client": "^6.0.1",
     "dotenv": "^8.2.0",
     "express": "^5.0.1",
-    "sqlite3": "^5.1.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {
