@@ -104,6 +104,38 @@ export const errorMiddleware = (
         });
         return;
 
+      // Foreign key violation
+      case 'P2003':
+        res.status(409).json({
+          success: false,
+          msg: 'Operation violates foreign key constraint',
+        });
+        return;
+
+      // Transaction failed
+      case 'P2034':
+        res.status(409).json({
+          success: false,
+          msg: 'Transaction failed due to concurrent update',
+        });
+        return;
+
+      // Value out of range
+      case 'P2007':
+        res.status(400).json({
+          success: false,
+          msg: 'Numeric value is out of range',
+        });
+        return;
+
+      // Database is read-only
+      case 'P1003':
+        res.status(403).json({
+          success: false,
+          msg: 'Database is in read-only mode',
+        });
+        return;
+
       default:
         res.status(500).json({
           success: false,
