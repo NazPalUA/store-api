@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { CustomError } from '../errors/custom-error';
 
-export const errorHandler = (
+export const errorMiddleware = (
   err: Error | CustomError,
   req: Request,
   res: Response,

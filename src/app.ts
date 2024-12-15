@@ -1,26 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
 import express, { Application } from 'express';
-import { errorHandler } from './middleware/error-handler';
-import { notFound } from './middleware/not-found';
+import { errorMiddleware } from './middleware/error-handler';
+import { notFoundMiddleware } from './middleware/not-found';
 import taskRoutes from './routes/tasks.routes';
 
 const app: Application = express();
 const prisma = new PrismaClient();
-const port: number = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 app.use('/api/v1/tasks', taskRoutes);
 
-// Serve static files
 app.use(express.static('./public'));
 
-// Handle 404s
-app.use(notFound);
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
-// Handle errors
-app.use(errorHandler);
-
+const port: number = Number(process.env.PORT) || 3000;
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
