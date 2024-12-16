@@ -1,12 +1,12 @@
-export type ProductOrderDirection = 'asc' | 'desc';
+export type SortOrder = 'asc' | 'desc';
 
-export interface ProductOrderBy {
-  [key: string]: ProductOrderDirection;
+export interface SortCriteria {
+  [key: string]: SortOrder;
 }
 
-export const parseProductSort = (
+export const parseSortFields = (
   sort?: string[]
-): ProductOrderBy[] | undefined => {
+): SortCriteria[] | undefined => {
   if (!sort) return undefined;
 
   return sort.map(field => ({

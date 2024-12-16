@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../../client';
 import { PRODUCT_NUMERIC_FIELDS } from '../../constants';
 import { productQuerySchema } from '../../schemas/product-query.schema';
-import { parseNumericComparisons } from '../../utils/numeric-filters.utils';
-import { parseProductSort } from '../../utils/product-sort.utils';
+import { parseNumericComparisons } from '../../utils/parse-numeric-filters';
+import { parseSortFields } from '../../utils/parse-sort-fields';
 
 const getAllProducts = async (
   req: Request,
@@ -22,7 +22,7 @@ const getAllProducts = async (
   };
 
   // Handle sorting
-  const orderBy = parseProductSort(sort);
+  const orderBy = parseSortFields(sort);
 
   // Handle field selection
   const select = fields?.reduce(
