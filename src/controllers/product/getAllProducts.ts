@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../../client';
+import { PRODUCT_NUMERIC_FIELDS } from '../../constants';
 import { productQuerySchema } from '../../schemas/product-query.schema';
-import { parseProductNumericFilters } from '../../utils/product-filters.utils';
+import { parseNumericComparisons } from '../../utils/numeric-filters.utils';
 import { parseProductSort } from '../../utils/product-sort.utils';
 
 const getAllProducts = async (
@@ -17,7 +18,7 @@ const getAllProducts = async (
     ...(featured !== undefined && { featured }),
     ...(company && { company }),
     ...(name && { name: { contains: name, mode: 'insensitive' } }),
-    ...parseProductNumericFilters(numericFilters),
+    ...parseNumericComparisons(PRODUCT_NUMERIC_FIELDS, numericFilters),
   };
 
   // Handle sorting
