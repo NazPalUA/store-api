@@ -1,24 +1,25 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { NextFunction, Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
-import { CustomError } from '../errors/custom-error';
+import { BaseError } from '../errors';
 
 export const errorMiddleware = (
-  err: Error | CustomError,
+  err: Error,
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  if (err instanceof CustomError) {
+  if (err instanceof BaseError) {
     res.status(err.statusCode).json({
       success: false,
-      msg: err.message,
+      errors: err.serializeErrors(),
     });
     return;
   }
 
   if (err instanceof ZodError) {
-    res.status(400).json({
+    res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       errors: err.errors.map(error => ({
         path: error.path,
@@ -31,17 +32,17 @@ export const errorMiddleware = (
   if (err instanceof PrismaClientKnownRequestError) {
     switch (err.code) {
       // Unique constraint violations
-      case 'P2002':
+      case 'P2002': {
         const field = (err.meta?.target as string[])?.[0] || 'field';
-        res.status(409).json({
+        res.status(StatusCodes.CONFLICT).json({
           success: false,
-          msg: `A task with this ${field} already exists`,
+          errors: [{ message: `A record with this ${field} already exists` }],
         });
         return;
-
+      }
       // Invalid data type
       case 'P2006':
-        res.status(400).json({
+        res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'The provided value is invalid for its type',
         });
@@ -49,7 +50,7 @@ export const errorMiddleware = (
 
       // Required field missing
       case 'P2011':
-        res.status(400).json({
+        res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'Required fields are missing',
         });
@@ -57,24 +58,25 @@ export const errorMiddleware = (
 
       // Invalid ID format
       case 'P2023':
-        res.status(400).json({
+        res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'Invalid ID format',
         });
         return;
 
       // Record not found
-      case 'P2025':
+      case 'P2025': {
         const resource = (err.meta?.modelName as string) || 'Resource';
-        res.status(404).json({
+        res.status(StatusCodes.NOT_FOUND).json({
           success: false,
           msg: `${resource} not found`,
         });
         return;
+      }
 
       // Database connection failed
       case 'P1001':
-        res.status(503).json({
+        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
           success: false,
           msg: 'Unable to connect to the database',
         });
@@ -82,7 +84,7 @@ export const errorMiddleware = (
 
       // Database timeout
       case 'P1008':
-        res.status(504).json({
+        res.status(StatusCodes.GATEWAY_TIMEOUT).json({
           success: false,
           msg: 'Database operation timed out',
         });
@@ -90,7 +92,7 @@ export const errorMiddleware = (
 
       // Database already exists
       case 'P1009':
-        res.status(409).json({
+        res.status(StatusCodes.CONFLICT).json({
           success: false,
           msg: 'Database already exists',
         });
@@ -98,7 +100,7 @@ export const errorMiddleware = (
 
       // Field constraints violation
       case 'P2019':
-        res.status(400).json({
+        res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'Input value is too long or violates field constraints',
         });
@@ -106,7 +108,7 @@ export const errorMiddleware = (
 
       // Foreign key violation
       case 'P2003':
-        res.status(409).json({
+        res.status(StatusCodes.CONFLICT).json({
           success: false,
           msg: 'Operation violates foreign key constraint',
         });
@@ -114,7 +116,7 @@ export const errorMiddleware = (
 
       // Transaction failed
       case 'P2034':
-        res.status(409).json({
+        res.status(StatusCodes.CONFLICT).json({
           success: false,
           msg: 'Transaction failed due to concurrent update',
         });
@@ -122,7 +124,7 @@ export const errorMiddleware = (
 
       // Value out of range
       case 'P2007':
-        res.status(400).json({
+        res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'Numeric value is out of range',
         });
@@ -130,14 +132,14 @@ export const errorMiddleware = (
 
       // Database is read-only
       case 'P1003':
-        res.status(403).json({
+        res.status(StatusCodes.FORBIDDEN).json({
           success: false,
           msg: 'Database is in read-only mode',
         });
         return;
 
       default:
-        res.status(500).json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
           success: false,
           msg: 'An unexpected database error occurred',
         });
@@ -145,11 +147,8 @@ export const errorMiddleware = (
     }
   }
 
-  const statusCode =
-    (err as CustomError).statusCode || (err as any).status || 500;
-
-  res.status(statusCode).json({
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
     success: false,
-    msg: err.message || 'Internal Server Error',
+    errors: [{ message: 'Internal Server Error' }],
   });
 };
