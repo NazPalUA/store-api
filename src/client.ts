@@ -22,6 +22,8 @@ async function connectDB(): Promise<Db> {
     console.error('MongoDB connection error:', error);
     console.log('Please make sure MongoDB is running on your system');
     process.exit(1);
+  } finally {
+    await client.close();
   }
 }
 
