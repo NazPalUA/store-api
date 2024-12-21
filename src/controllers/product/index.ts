@@ -1,2 +1,2 @@
+export { createProduct } from './createProduct';
 export { getAllProducts } from './getAllProducts';
-export { getAllProductsStatic } from './getAllProductsStatic';

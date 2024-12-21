@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { getAllProducts, getAllProductsStatic } from '../controllers/product';
-import { createProduct } from '../controllers/product/createProduct';
+import { createProduct, getAllProducts } from '../controllers/product';
 import { validate } from '../middleware/validate';
 import { createProductSchema } from '../schemas/product.schema';
 
@@ -10,7 +9,5 @@ router
   .route('/')
   .get(getAllProducts)
   .post(validate(createProductSchema), createProduct);
-
-router.route('/static').get(getAllProductsStatic);
 
 export default router;
