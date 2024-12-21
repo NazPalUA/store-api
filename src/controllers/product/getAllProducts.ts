@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import prisma from '../../client';
+import { connectDB } from '../../client';
 import { PRODUCT_NUMERIC_FIELDS } from '../../constants';
 import { productQuerySchema } from '../../schemas/product-query.schema';
 import { parseNumericComparisons } from '../../utils/parse-numeric-filters';
@@ -13,20 +13,23 @@ const getAllProducts = async (
   const { page, limit, featured, company, name, sort, numericFilters, fields } =
     productQuerySchema.parse(req.query);
 
+  const db = await connectDB();
+  const collection = db.collection('products');
+
   // Base query
-  const where: Record<string, any> = {
+  const filter: Record<string, any> = {
     ...(featured !== undefined && { featured }),
     ...(company && { company }),
-    ...(name && { name: { contains: name, mode: 'insensitive' } }),
+    ...(name && { name: { $regex: name, $options: 'i' } }),
     ...parseNumericComparisons(PRODUCT_NUMERIC_FIELDS, numericFilters),
   };
 
   // Handle sorting
-  const orderBy = parseSortFields(sort);
+  const sortOptions = parseSortFields(sort);
 
   // Handle field selection
-  const select = fields?.reduce(
-    (acc, field) => ({ ...acc, [field]: true }),
+  const projection = fields?.reduce(
+    (acc, field) => ({ ...acc, [field]: 1 }),
     {}
   );
 
@@ -35,14 +38,13 @@ const getAllProducts = async (
 
   // Execute query
   const [products, totalProducts] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy,
-      skip,
-      take: limit,
-      ...(select && { select }),
-    }),
-    prisma.product.count({ where }),
+    collection
+      .find(filter, { projection })
+      .sort(sortOptions as unknown as { [key: string]: 1 | -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray(),
+    collection.countDocuments(filter),
   ]);
 
   const totalPages = Math.ceil(totalProducts / limit);

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import prisma from '../../client';
+import { connectDB } from '../../client';
 import { createTaskSchema } from '../../schemas/task.schema';
 
 type CreateTaskRequest = Request<
@@ -16,10 +16,18 @@ const createTask = async (
 ): Promise<void> => {
   const { name } = req.body;
 
-  const task = await prisma.task.create({
-    data: { name },
+  const db = await connectDB();
+  const collection = db.collection('tasks');
+
+  const result = await collection.insertOne({
+    name,
+    completed: false,
   });
-  res.status(201).json({ success: true, data: task });
+
+  res.status(201).json({
+    success: true,
+    data: { _id: result.insertedId, name, completed: false },
+  });
 };
 
 export { createTask };

@@ -1,31 +1,22 @@
 import { NUMERIC_OPERATORS } from '../constants';
 
-export interface NumericFilter {
-  [key: string]: {
-    [operator: string]: number;
-  };
-}
-
 export const parseNumericComparisons = (
-  allowedFieldsArr: readonly string[] = [],
-  filtersQuery?: string
-): NumericFilter => {
-  if (!filtersQuery) return {};
+  allowedFields: string[] | readonly string[],
+  filters?: string
+): Record<string, any> => {
+  if (!filters) return {};
 
   const regEx = /\b(<|>|>=|=|<=)\b/g;
-  const filters = filtersQuery.replace(
+  const mongoFilters = filters.replace(
     regEx,
-    match => `$${NUMERIC_OPERATORS[match as keyof typeof NUMERIC_OPERATORS]}$`
+    match => `-${NUMERIC_OPERATORS[match as keyof typeof NUMERIC_OPERATORS]}-`
   );
 
-  const filterArray = filters.split(',').map(item => item.split('$'));
-  const where: NumericFilter = {};
-
-  filterArray.forEach(([field, operator, value]) => {
-    if (allowedFieldsArr.includes(field)) {
-      where[field] = { [operator]: Number(value) };
+  return mongoFilters.split(',').reduce((acc, filter) => {
+    const [field, operator, value] = filter.split('-');
+    if (allowedFields.includes(field)) {
+      acc[field] = { [operator]: Number(value) };
     }
-  });
-
-  return where;
+    return acc;
+  }, {} as Record<string, any>);
 };

@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
-import prisma from '../../client';
+import { connectDB } from '../../client';
+import { NotFoundError } from '../../errors/not-found-error';
 import { updateTaskSchema } from '../../schemas/task.schema';
 
 type UpdateTaskRequest = Request<
@@ -16,11 +18,20 @@ const updateTask = async (
 ): Promise<void> => {
   const { id } = req.params;
 
-  const task = await prisma.task.update({
-    where: { id: Number(id) },
-    data: req.body,
-  });
-  res.status(200).json({ success: true, data: task });
+  const db = await connectDB();
+  const collection = db.collection('tasks');
+
+  const result = await collection.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: req.body },
+    { returnDocument: 'after' }
+  );
+
+  if (!result?.value) {
+    throw new NotFoundError('Task');
+  }
+
+  res.status(200).json({ success: true, data: result.value });
 };
 
 export { updateTask };

@@ -1,30 +1,31 @@
-import { Company, PrismaClient } from '.prisma/client';
+import { connectDB } from '../client';
 import products from '../data/products.json';
-
-const prisma = new PrismaClient();
 
 async function populate() {
   try {
+    const db = await connectDB();
+    const collection = db.collection('products');
+
     // Delete existing records (optional)
-    await prisma.product.deleteMany({});
+    await collection.deleteMany({});
     console.log('Deleted existing products');
 
     // Insert new records
-    const createdProducts = await prisma.product.createMany({
-      data: products.map(product => ({
+    const result = await collection.insertMany(
+      products.map(product => ({
         name: product.name,
         price: product.price,
-        company: product.company.toLowerCase() as Company,
+        company: product.company.toLowerCase(),
         featured: product.featured || false,
         rating: product.rating || 0,
-      })),
-    });
+      }))
+    );
 
-    console.log(`Created ${createdProducts.count} products`);
+    console.log(`Created ${result.insertedCount} products`);
   } catch (error) {
     console.error('Error populating database:', error);
   } finally {
-    await prisma.$disconnect();
+    process.exit(0);
   }
 }
 

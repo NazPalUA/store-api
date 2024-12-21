@@ -1,6 +1,6 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { MongoError } from 'mongodb';
 import { ZodError } from 'zod';
 import { BaseError } from '../errors';
 
@@ -29,112 +29,35 @@ export const errorMiddleware = (
     return;
   }
 
-  if (err instanceof PrismaClientKnownRequestError) {
+  if (err instanceof MongoError) {
     switch (err.code) {
-      // Unique constraint violations
-      case 'P2002': {
-        const field = (err.meta?.target as string[])?.[0] || 'field';
+      case 11000:
+        const field = Object.keys((err as any).keyPattern)[0] || 'field';
         res.status(StatusCodes.CONFLICT).json({
           success: false,
           errors: [{ message: `A record with this ${field} already exists` }],
         });
         return;
-      }
-      // Invalid data type
-      case 'P2006':
-        res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          msg: 'The provided value is invalid for its type',
-        });
-        return;
 
-      // Required field missing
-      case 'P2011':
-        res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          msg: 'Required fields are missing',
-        });
-        return;
-
-      // Invalid ID format
-      case 'P2023':
+      case 51:
         res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
           msg: 'Invalid ID format',
         });
         return;
 
-      // Record not found
-      case 'P2025': {
-        const resource = (err.meta?.modelName as string) || 'Resource';
-        res.status(StatusCodes.NOT_FOUND).json({
+      case 112:
+        res.status(StatusCodes.CONFLICT).json({
           success: false,
-          msg: `${resource} not found`,
+          msg: 'Write conflict occurred, please try again',
         });
         return;
-      }
 
-      // Database connection failed
-      case 'P1001':
+      case 8000:
+      case 6:
         res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
           success: false,
           msg: 'Unable to connect to the database',
-        });
-        return;
-
-      // Database timeout
-      case 'P1008':
-        res.status(StatusCodes.GATEWAY_TIMEOUT).json({
-          success: false,
-          msg: 'Database operation timed out',
-        });
-        return;
-
-      // Database already exists
-      case 'P1009':
-        res.status(StatusCodes.CONFLICT).json({
-          success: false,
-          msg: 'Database already exists',
-        });
-        return;
-
-      // Field constraints violation
-      case 'P2019':
-        res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          msg: 'Input value is too long or violates field constraints',
-        });
-        return;
-
-      // Foreign key violation
-      case 'P2003':
-        res.status(StatusCodes.CONFLICT).json({
-          success: false,
-          msg: 'Operation violates foreign key constraint',
-        });
-        return;
-
-      // Transaction failed
-      case 'P2034':
-        res.status(StatusCodes.CONFLICT).json({
-          success: false,
-          msg: 'Transaction failed due to concurrent update',
-        });
-        return;
-
-      // Value out of range
-      case 'P2007':
-        res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          msg: 'Numeric value is out of range',
-        });
-        return;
-
-      // Database is read-only
-      case 'P1003':
-        res.status(StatusCodes.FORBIDDEN).json({
-          success: false,
-          msg: 'Database is in read-only mode',
         });
         return;
 

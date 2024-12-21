@@ -1,12 +1,15 @@
-import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
 import express, { Application } from 'express';
+import client, { connectDB } from './client';
 import { errorMiddleware } from './middleware/error-handler';
 import { notFoundMiddleware } from './middleware/not-found';
 import productRoutes from './routes/products.routes';
 import taskRoutes from './routes/tasks.routes';
+
 const app: Application = express();
-const prisma = new PrismaClient();
+
+// Connect to MongoDB
+connectDB();
 
 app.use(express.json());
 app.use('/api/v1/tasks', taskRoutes);
@@ -24,7 +27,7 @@ const server = app.listen(port, () => {
 
 process.on('SIGINT', async () => {
   console.log('Shutting down gracefully...');
-  await prisma.$disconnect();
+  await client.close();
   server.close(() => {
     process.exit(0);
   });
