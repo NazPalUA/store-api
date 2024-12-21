@@ -1,17 +1,21 @@
-export type SortOrder = 'asc' | 'desc';
+import { Sort, SortDirection } from 'mongodb';
 
-export interface SortCriteria {
-  [key: string]: SortOrder;
-}
-
-export const parseSortFields = (
-  sort?: string[]
-): SortCriteria[] | undefined => {
+export const parseSortFields = (sort?: string[]): Sort | undefined => {
   if (!sort) return undefined;
 
-  return sort.map(field => ({
-    [field.startsWith('-') ? field.slice(1) : field]: field.startsWith('-')
-      ? 'desc'
-      : 'asc',
-  }));
+  return sort.reduce(
+    (acc, field) => ({
+      ...acc,
+      [getFieldKey(field)]: getSortDirection(field),
+    }),
+    {}
+  );
 };
+
+function getSortDirection(field: string): SortDirection {
+  return field.startsWith('-') ? -1 : 1;
+}
+
+function getFieldKey(field: string): string {
+  return field.startsWith('-') ? field.slice(1) : field;
+}

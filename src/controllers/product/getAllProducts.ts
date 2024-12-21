@@ -37,7 +37,7 @@ const getAllProducts = async (
   const [products, totalProducts] = await Promise.all([
     productCollection
       .find(filter, { projection })
-      .sort(sortOptions as unknown as { [key: string]: 1 | -1 })
+      .sort(sortOptions ?? {})
       .skip(skip)
       .limit(limit)
       .toArray(),
