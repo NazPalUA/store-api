@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { connectDB } from '../../client';
+import { taskCollection } from '../../client';
 import { createTaskSchema } from '../../schemas/task.schema';
 
 type CreateTaskRequest = Request<
@@ -16,10 +16,7 @@ const createTask = async (
 ): Promise<void> => {
   const { name } = req.body;
 
-  const db = await connectDB();
-  const collection = db.collection('tasks');
-
-  const result = await collection.insertOne({
+  const result = await taskCollection.insertOne({
     name,
     completed: false,
   });

@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { MongoClient } from 'mongodb';
+import { Db, MongoClient } from 'mongodb';
 
-const url = process.env.MONGODB_URI;
+const url = process.env.MONGODB_URI || '';
 if (!url) {
   throw new Error('MONGODB_URI is not set');
 }
@@ -13,7 +13,7 @@ const client = new MongoClient(url, {
   serverSelectionTimeoutMS: 5000,
 });
 
-export async function connectDB() {
+async function connectDB(): Promise<Db> {
   try {
     await client.connect();
     console.log('Connected to MongoDB');
@@ -25,4 +25,10 @@ export async function connectDB() {
   }
 }
 
+const db = client.db(dbName);
+const productCollection = db.collection('product');
+const taskCollection = db.collection('task');
+const userCollection = db.collection('user');
+
 export default client;
+export { connectDB, db, productCollection, taskCollection, userCollection };

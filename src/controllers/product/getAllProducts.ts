@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { connectDB } from '../../client';
+import { productCollection } from '../../client';
 import { PRODUCT_NUMERIC_FIELDS } from '../../constants';
 import { productQuerySchema } from '../../schemas/product-query.schema';
 import { parseNumericComparisons } from '../../utils/parse-numeric-filters';
@@ -12,9 +12,6 @@ const getAllProducts = async (
 ): Promise<void> => {
   const { page, limit, featured, company, name, sort, numericFilters, fields } =
     productQuerySchema.parse(req.query);
-
-  const db = await connectDB();
-  const collection = db.collection('products');
 
   // Base query
   const filter: Record<string, any> = {
@@ -38,13 +35,13 @@ const getAllProducts = async (
 
   // Execute query
   const [products, totalProducts] = await Promise.all([
-    collection
+    productCollection
       .find(filter, { projection })
       .sort(sortOptions as unknown as { [key: string]: 1 | -1 })
       .skip(skip)
       .limit(limit)
       .toArray(),
-    collection.countDocuments(filter),
+    productCollection.countDocuments(filter),
   ]);
 
   const totalPages = Math.ceil(totalProducts / limit);

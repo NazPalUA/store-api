@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { connectDB } from '../../client';
+import { productCollection } from '../../client';
 import { createProductSchema } from '../../schemas/product.schema';
 
 type CreateProductRequest = Request<
@@ -16,10 +16,7 @@ const createProduct = async (
 ): Promise<void> => {
   const { name, price, featured, rating, company } = req.body;
 
-  const db = await connectDB();
-  const collection = db.collection('products');
-
-  const product = await collection.insertOne({
+  const product = await productCollection.insertOne({
     name,
     price,
     featured,
